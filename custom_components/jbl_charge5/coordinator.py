@@ -30,7 +30,9 @@ class JblCharge5Coordinator(DataUpdateCoordinator[SpeakerInfo]):
         self.address = address
 
     async def _async_update_data(self) -> SpeakerInfo:
-        device = bluetooth.async_ble_device_from_address(self.hass, self.address, connectable=True)
+        device = bluetooth.async_ble_device_from_address(
+            self.hass, self.address, connectable=True
+        )
         if device is None:
             raise UpdateFailed(f"JBL Charge 5 {self.address} not found / not in range")
         client = await establish_connection(

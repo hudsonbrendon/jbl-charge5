@@ -1,5 +1,5 @@
-from custom_components.jbl_charge5.protocol import decode_frame
 from custom_components.jbl_charge5.parser import SpeakerInfo, parse_speaker_info
+from custom_components.jbl_charge5.protocol import decode_frame
 
 # Real burst captured from a JBL Charge 5 on 2026-05-31 (battery was 100%).
 REAL_FRAMES_HEX = [

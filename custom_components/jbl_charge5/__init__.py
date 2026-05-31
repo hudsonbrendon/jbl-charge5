@@ -10,7 +10,13 @@ from homeassistant.exceptions import ConfigEntryNotReady
 
 from .coordinator import JblCharge5Coordinator
 
-PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
+PLATFORMS = [
+    Platform.SENSOR,
+    Platform.BINARY_SENSOR,
+    Platform.BUTTON,
+    Platform.SWITCH,
+    Platform.SELECT,
+]
 
 type JblConfigEntry = ConfigEntry[JblCharge5Coordinator]
 

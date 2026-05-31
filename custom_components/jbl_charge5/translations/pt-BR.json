@@ -1,0 +1,40 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "confirm": {
+        "description": "Deseja configurar {name}?"
+      },
+      "user": {
+        "data": {
+          "address": "Dispositivo"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Dispositivo já configurado",
+      "no_devices_found": "Nenhuma JBL Charge 5 encontrada por perto"
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "in_use": { "name": "Em uso" }
+    },
+    "button": {
+      "play_sound": { "name": "Tocar som" }
+    },
+    "switch": {
+      "feedback_tones": { "name": "Sons de feedback" }
+    },
+    "select": {
+      "audio_channel": {
+        "name": "Canal de áudio",
+        "state": { "mono": "Mono", "left": "Esquerdo", "right": "Direito" }
+      }
+    },
+    "sensor": {
+      "model": { "name": "Modelo" },
+      "mac": { "name": "Endereço MAC" }
+    }
+  }
+}

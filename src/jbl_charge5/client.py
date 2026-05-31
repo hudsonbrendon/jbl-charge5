@@ -24,7 +24,9 @@ NOTIFY_CHAR_UUID = "65786365-6c70-6f69-6e74-2e636f6d0001"
 async def find_speaker(name_filter: str = "JBL") -> str:
     """Return the BLE address of the first matching speaker. Raises if none."""
     devices = await BleakScanner.discover(timeout=10.0)
-    match = next((d for d in devices if d.name and name_filter.lower() in d.name.lower()), None)
+    match = next(
+        (d for d in devices if d.name and name_filter.lower() in d.name.lower()), None
+    )
     if not match:
         raise RuntimeError(f"No BLE device matching {name_filter!r}")
     return match.address
@@ -40,7 +42,10 @@ async def read_speaker_info(address: str, timeout: float = 5.0) -> dict:
             frame = decode_frame(bytes(data))
         except ValueError:
             return
-        if frame.packet_type == PacketType.SPEAKER_INFO_RESPONSE and not response.done():
+        if (
+            frame.packet_type == PacketType.SPEAKER_INFO_RESPONSE
+            and not response.done()
+        ):
             response.set_result(frame)
 
     async with BleakClient(address) as client:

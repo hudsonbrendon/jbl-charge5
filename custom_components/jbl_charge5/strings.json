@@ -18,9 +18,23 @@
   },
   "entity": {
     "binary_sensor": {
-      "in_use": {
-        "name": "In use"
+      "in_use": { "name": "In use" }
+    },
+    "button": {
+      "play_sound": { "name": "Play sound" }
+    },
+    "switch": {
+      "feedback_tones": { "name": "Feedback tones" }
+    },
+    "select": {
+      "audio_channel": {
+        "name": "Audio channel",
+        "state": { "mono": "Mono", "left": "Left", "right": "Right" }
       }
+    },
+    "sensor": {
+      "model": { "name": "Model" },
+      "mac": { "name": "MAC address" }
     }
   }
 }

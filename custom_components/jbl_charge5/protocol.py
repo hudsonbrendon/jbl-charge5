@@ -20,6 +20,9 @@ class PacketType(IntEnum):
     PLAY_SOUND = 0x31
     FIRMWARE_VERSION_REQUEST = 0x41
     FIRMWARE_VERSION_RESPONSE = 0x42
+    FEEDBACK_REQUEST = 0x65
+    FEEDBACK_RESPONSE = 0x66
+    FEEDBACK_SET = 0x67
 
 
 class Token(IntEnum):

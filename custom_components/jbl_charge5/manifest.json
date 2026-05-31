@@ -13,5 +13,5 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/hudsonbrendon/jbl-charge5/issues",
   "requirements": ["bleak-retry-connector>=3.5.0"],
-  "version": "0.1.0"
+  "version": "0.2.0"
 }

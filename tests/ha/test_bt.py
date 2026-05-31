@@ -2,8 +2,8 @@ import asyncio
 
 import pytest
 
-from custom_components.jbl_charge5.bt import async_read_speaker_info
 from custom_components.jbl_charge5 import const
+from custom_components.jbl_charge5.bt import async_read_speaker_info
 
 REAL_FRAMES_HEX = [
     "aa1203004464",          # battery 100

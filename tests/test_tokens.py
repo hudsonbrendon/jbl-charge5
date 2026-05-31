@@ -1,5 +1,5 @@
+from jbl_charge5.protocol import PacketType, decode_frame
 from jbl_charge5.tokens import extract_battery
-from jbl_charge5.protocol import decode_frame, PacketType
 
 
 def test_real_charge5_battery_capture():
