@@ -1,0 +1,17 @@
+{
+  "domain": "jbl_charge5",
+  "name": "JBL Charge 5",
+  "bluetooth": [
+    { "service_uuid": "65786365-6c70-6f69-6e74-2e636f6d0000" },
+    { "local_name": "JBL Charge 5*" }
+  ],
+  "codeowners": ["@hudsonbrendon"],
+  "config_flow": true,
+  "dependencies": ["bluetooth_adapters"],
+  "documentation": "https://github.com/hudsonbrendon/jbl-charge5",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/hudsonbrendon/jbl-charge5/issues",
+  "requirements": ["bleak-retry-connector>=3.5.0"],
+  "version": "0.1.0"
+}

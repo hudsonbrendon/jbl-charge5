@@ -1,0 +1,11 @@
+Speaker: JBL Charge 5 (XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX)
+Toggle PLAY / PAUSE on the speaker during the next ~16 seconds.
+
+round 1: audio_source(0x47)=01  battery(0x44)=64
+round 2: audio_source(0x47)=01  battery(0x44)=64
+round 3: audio_source(0x47)=01  battery(0x44)=64
+round 4: audio_source(0x47)=01  battery(0x44)=64
+round 5: audio_source(0x47)=01  battery(0x44)=64
+round 6: audio_source(0x47)=01  battery(0x44)=64
+round 7: audio_source(0x47)=01  battery(0x44)=64
+round 8: audio_source(0x47)=01  battery(0x44)=64

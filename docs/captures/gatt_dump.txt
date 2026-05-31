@@ -1,0 +1,12 @@
+Scanning 10s for BLE devices...
+  (other nearby BLE devices redacted)
+  XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX  rssi=?  name='JBL Charge 5'
+  (other nearby BLE devices redacted)
+
+Connecting to JBL Charge 5 (XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX)...
+Connected. Services / characteristics:
+  [service] 65786365-6c70-6f69-6e74-2e636f6d0000
+    [char] 65786365-6c70-6f69-6e74-2e636f6d0001  (notify,read)
+    [char] 65786365-6c70-6f69-6e74-2e636f6d0002  (write,write-without-response)  <-- CONTROL CHARACTERISTIC
+
+FOUND custom control characteristic 65786365-6c70-6f69-6e74-2e636f6d0002 -> BLE path is viable.

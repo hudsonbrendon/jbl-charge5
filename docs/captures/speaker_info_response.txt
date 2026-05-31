@@ -1,0 +1,11 @@
+Speaker: JBL Charge 5 (XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX)
+Writing Speaker-Info request aa11 to 65786365-6c70-6f69-6e74-2e636f6d0002
+Listening 6s for notifications...
+  NOTIFY raw=aa120f00c10c4a424c204368617267652035  type=0x12 payload=00c10c4a424c204368617267652035
+  NOTIFY raw=aa120400422040  type=0x12 payload=00422040
+  NOTIFY raw=aa1203004301  type=0x12 payload=004301
+  NOTIFY raw=aa1203004464  type=0x12 payload=004464  >>> BATTERY=100%
+  NOTIFY raw=aa1203004600  type=0x12 payload=004600
+  NOTIFY raw=aa1203004700  type=0x12 payload=004700
+  NOTIFY raw=aa12080048aabbccddeeff  type=0x12 payload=0048aabbccddeeff
+  NOTIFY raw=aa1204004a1d9f  type=0x12 payload=004a1d9f
