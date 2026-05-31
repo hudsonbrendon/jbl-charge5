@@ -1,3 +1,10 @@
-pytest-homeassistant-custom-component
+pytest-homeassistant-custom-component==0.13.316
 pytest-asyncio
 ruff
+# Runtime deps pulled in when the tests import homeassistant.components.bluetooth
+# (which loads the usb integration) and our coordinator. Not part of the HA core
+# wheel, so they must be installed explicitly for CI.
+bleak-retry-connector==4.6.1
+aiousbwatcher==1.1.2
+pyserial==3.5
+usb-devices==0.5.1
