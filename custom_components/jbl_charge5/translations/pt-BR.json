@@ -18,7 +18,8 @@
   },
   "entity": {
     "binary_sensor": {
-      "in_use": { "name": "Em uso" }
+      "in_use": { "name": "Em uso" },
+      "connectivity": { "name": "Conectividade" }
     },
     "button": {
       "play_sound": { "name": "Tocar som" }

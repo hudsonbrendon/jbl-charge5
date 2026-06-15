@@ -34,6 +34,9 @@ class JblCharge5Coordinator(DataUpdateCoordinator[SpeakerInfo]):
             self.hass, self.address, connectable=True
         )
         if device is None:
+            if self.data is not None:
+                _LOGGER.debug("JBL %s out of range; keeping last-known state", self.address)
+                return self.data
             raise UpdateFailed(f"JBL Charge 5 {self.address} not found / not in range")
         client = await establish_connection(
             BleakClientWithServiceCache, device, self.address

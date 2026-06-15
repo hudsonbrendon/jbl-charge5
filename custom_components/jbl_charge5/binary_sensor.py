@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -15,8 +18,14 @@ async def async_setup_entry(
     entry: JblConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the in-use binary sensor."""
-    async_add_entities([JblInUseBinarySensor(entry.runtime_data)])
+    """Set up the binary sensors."""
+    coordinator = entry.runtime_data
+    async_add_entities(
+        [
+            JblInUseBinarySensor(coordinator),
+            JblConnectivityBinarySensor(coordinator),
+        ]
+    )
 
 
 class JblInUseBinarySensor(JblCharge5Entity, BinarySensorEntity):
@@ -31,3 +40,27 @@ class JblInUseBinarySensor(JblCharge5Entity, BinarySensorEntity):
     @property
     def is_on(self) -> bool | None:
         return self.coordinator.data.source_connected
+
+
+class JblConnectivityBinarySensor(JblCharge5Entity, BinarySensorEntity):
+    """Honest online/offline state of the speaker's BLE link.
+
+    Unlike the other entities, this one is always available so it can keep
+    reporting "off" while the speaker is out of range. ``is_on`` reflects
+    whether the most recent coordinator refresh succeeded.
+    """
+
+    _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
+    _attr_translation_key = "connectivity"
+
+    def __init__(self, coordinator) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.address}_connectivity"
+
+    @property
+    def available(self) -> bool:
+        return True
+
+    @property
+    def is_on(self) -> bool:
+        return self.coordinator.last_update_success

@@ -25,3 +25,8 @@ class JblCharge5Entity(CoordinatorEntity[JblCharge5Coordinator]):
             model=(info.name if info and info.name else "Charge 5"),
             name=(info.name if info and info.name else "JBL Charge 5"),
         )
+
+    @property
+    def available(self) -> bool:
+        """Stay available (showing last-known state) once we have ever had data."""
+        return self.coordinator.data is not None

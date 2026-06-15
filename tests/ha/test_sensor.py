@@ -26,7 +26,8 @@ async def _setup(hass: HomeAssistant, info: SpeakerInfo):
     entry.add_to_hass(hass)
     with (
         patch(
-            "custom_components.jbl_charge5.bluetooth.async_ble_device_from_address",
+            "custom_components.jbl_charge5.coordinator.bluetooth."
+            "async_ble_device_from_address",
             return_value=MagicMock(),
         ),
         patch(
