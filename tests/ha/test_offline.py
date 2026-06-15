@@ -1,6 +1,6 @@
 """Offline behaviour: keep last-known state instead of going unavailable."""
 
-from unittest.mock import patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from homeassistant.config_entries import ConfigEntryState
@@ -73,3 +73,65 @@ async def test_setup_completes_when_speaker_offline(hass: HomeAssistant):
     connectivity = hass.states.get("binary_sensor.jbl_charge_5_connectivity")
     assert connectivity is not None
     assert connectivity.state == "off"
+
+
+async def test_connectivity_flips_off_when_speaker_drops_but_data_persists(
+    hass: HomeAssistant,
+):
+    """Critical-path regression for the lying connectivity sensor.
+
+    First a successful read populates the cache and reports online; then the
+    device drops out of range. The connectivity sensor must flip to ``off``
+    while the data entities stay available with their cached values.
+    """
+    entry = MockConfigEntry(domain=DOMAIN, unique_id=ADDRESS, title="JBL Charge 5")
+    entry.add_to_hass(hass)
+
+    info = SpeakerInfo(battery=77, source_connected=True, name="JBL Charge 5")
+
+    # 1. Successful first refresh: cache populated, device_online True.
+    with (
+        patch(
+            "custom_components.jbl_charge5.coordinator.bluetooth."
+            "async_ble_device_from_address",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "custom_components.jbl_charge5.coordinator.establish_connection",
+            new=AsyncMock(return_value=AsyncMock()),
+        ),
+        patch(
+            "custom_components.jbl_charge5.coordinator.async_read_speaker_info",
+            new=AsyncMock(return_value=info),
+        ),
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert entry.state is ConfigEntryState.LOADED
+    coordinator = entry.runtime_data
+    assert coordinator.device_online is True
+
+    assert hass.states.get("binary_sensor.jbl_charge_5_connectivity").state == "on"
+    assert hass.states.get("sensor.jbl_charge_5_battery").state == "77"
+    assert hass.states.get("binary_sensor.jbl_charge_5_in_use").state == "on"
+
+    # 2. The speaker drops out of range (device is None) with cache present.
+    with patch(
+        "custom_components.jbl_charge5.coordinator.bluetooth."
+        "async_ble_device_from_address",
+        return_value=None,
+    ):
+        await coordinator.async_refresh()
+        await hass.async_block_till_done()
+
+    # device_online flipped off, but cached data is retained.
+    assert coordinator.device_online is False
+    assert coordinator.data is info
+
+    # Connectivity honestly reports offline.
+    assert hass.states.get("binary_sensor.jbl_charge_5_connectivity").state == "off"
+
+    # Data entities stay available with their cached values.
+    assert hass.states.get("sensor.jbl_charge_5_battery").state == "77"
+    assert hass.states.get("binary_sensor.jbl_charge_5_in_use").state == "on"

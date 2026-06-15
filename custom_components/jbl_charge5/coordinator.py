@@ -28,12 +28,14 @@ class JblCharge5Coordinator(DataUpdateCoordinator[SpeakerInfo]):
             update_interval=timedelta(seconds=SCAN_INTERVAL_SECONDS),
         )
         self.address = address
+        self.device_online = False
 
     async def _async_update_data(self) -> SpeakerInfo:
         device = bluetooth.async_ble_device_from_address(
             self.hass, self.address, connectable=True
         )
         if device is None:
+            self.device_online = False
             if self.data is not None:
                 _LOGGER.debug("JBL %s out of range; keeping last-known state", self.address)
                 return self.data
@@ -42,6 +44,8 @@ class JblCharge5Coordinator(DataUpdateCoordinator[SpeakerInfo]):
             BleakClientWithServiceCache, device, self.address
         )
         try:
-            return await async_read_speaker_info(client)
+            info = await async_read_speaker_info(client)
+            self.device_online = True
+            return info
         finally:
             await client.disconnect()
