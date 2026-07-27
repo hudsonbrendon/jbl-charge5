@@ -6,6 +6,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
+from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -36,10 +37,19 @@ class JblInUseBinarySensor(JblCharge5Entity, BinarySensorEntity):
     def __init__(self, coordinator) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.address}_in_use"
+        self._restored_is_on: bool | None = None
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        last_state = await self.async_get_last_state()
+        if last_state is not None and last_state.state in (STATE_ON, STATE_OFF):
+            self._restored_is_on = last_state.state == STATE_ON
 
     @property
     def is_on(self) -> bool | None:
-        return self.coordinator.data.source_connected
+        if self.coordinator.data is not None:
+            return self.coordinator.data.source_connected
+        return self._restored_is_on
 
 
 class JblConnectivityBinarySensor(JblCharge5Entity, BinarySensorEntity):

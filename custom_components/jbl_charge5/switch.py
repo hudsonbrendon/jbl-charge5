@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from homeassistant.components.switch import SwitchEntity
+from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -37,6 +38,13 @@ class JblFeedbackToneSwitch(JblCharge5Entity, SwitchEntity):
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.address}_feedback_tones"
         self._is_on: bool | None = None
+
+    async def async_added_to_hass(self) -> None:
+        """Restore the last commanded state; this switch never touches BT data."""
+        await super().async_added_to_hass()
+        last_state = await self.async_get_last_state()
+        if last_state is not None and last_state.state in (STATE_ON, STATE_OFF):
+            self._is_on = last_state.state == STATE_ON
 
     @property
     def is_on(self) -> bool | None:

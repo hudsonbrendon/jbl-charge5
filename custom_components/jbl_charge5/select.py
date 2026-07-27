@@ -33,10 +33,19 @@ class JblAudioChannelSelect(JblCharge5Entity, SelectEntity):
     def __init__(self, coordinator) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.address}_audio_channel"
+        self._restored_option: str | None = None
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        last_state = await self.async_get_last_state()
+        if last_state is not None and last_state.state in self._attr_options:
+            self._restored_option = last_state.state
 
     @property
     def current_option(self) -> str | None:
-        return _VALUE_TO_OPTION.get(self.coordinator.data.channel)
+        if self.coordinator.data is not None:
+            return _VALUE_TO_OPTION.get(self.coordinator.data.channel)
+        return self._restored_option
 
     async def async_select_option(self, option: str) -> None:
         await async_send_command(
