@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from homeassistant.components import bluetooth
+import logging
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
 from .coordinator import JblCharge5Coordinator
+
+_LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [
     Platform.SENSOR,
@@ -25,13 +28,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: JblConfigEntry) -> bool:
     """Set up JBL Charge 5 from a config entry."""
     address = entry.unique_id
     assert address is not None
-    if bluetooth.async_ble_device_from_address(hass, address, connectable=True) is None:
-        raise ConfigEntryNotReady(f"Could not find JBL Charge 5 with address {address}")
 
     coordinator = JblCharge5Coordinator(hass, address)
-    await coordinator.async_config_entry_first_refresh()
+    try:
+        await coordinator.async_config_entry_first_refresh()
+    except ConfigEntryNotReady:
+        _LOGGER.debug("JBL %s offline at setup; loading with no cached state", address)
     entry.runtime_data = coordinator
-
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
