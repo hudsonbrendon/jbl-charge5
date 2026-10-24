@@ -53,9 +53,9 @@ class JblCharge5Entity(RestoreEntity, CoordinatorEntity[JblCharge5Coordinator]):
         """Remember whether a previous run left a usable state to restore."""
         await super().async_added_to_hass()
         last_state = await self.async_get_last_state()
-        self._restored_available = (
-            last_state is not None
-            and last_state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN)
+        self._restored_available = last_state is not None and last_state.state not in (
+            STATE_UNAVAILABLE,
+            STATE_UNKNOWN,
         )
 
     @property

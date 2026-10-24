@@ -89,3 +89,83 @@ Real capture (battery was 100%):
 - **Token `0x4A`** (`0x1D9F`) — meaning unknown (serial? firmware? linked count?).
 - Whether the protocol stays reachable while the speaker streams audio from a
   phone (i.e. can HA poll without interrupting playback) — to be tested.
+
+## Live verification (2026-10-24)
+
+Opcodes taken from the JBL Portable APK ([APK_PROTOCOL.md](APK_PROTOCOL.md)) and
+sent to a real Charge 5 (firmware `0.8.6.0`). Requests carry a length byte, as
+the app sends them (`AA 41 00`); `AA EE 01 <op> 00` means "unsupported".
+
+| Request | Reply | Meaning | Used by the integration |
+|---|---|---|---|
+| `AA 11 00` | `AA 12 …` per token | Speaker info (below) | every poll |
+| `AA 13 02 00 <tok>` | `AA 12 …` | One token only | — |
+| `AA 41 00` | `AA 42 04 00 08 06 00` | Firmware, bytes as decimals → `0.8.6.0` | sensor |
+| `AA 65 00` | `AA 66 01 <00/01>` | Feedback tones off/on | switch state |
+| `AA 67 01 <00/01>` | `AA 00 02 67 00` | Set feedback tones | switch |
+| `AA 6C 01 00` | `AA 6D 12 …` (2 notifications) | Simple EQ, see below | select + numbers |
+| `AA 6E …` | `AA 00 02 6E 00` | Set simple EQ | select + numbers |
+| `AA 81 00` | `AA 82 26 …` | Lifetime counters, see below | sensors |
+| `AA 17 00` | `AA 16 01 00` | PartyBoost role (0 normal, 1 master, 2 slave) | — |
+| `AA 4A 00` | `AA 4B 03 00 08 06` | DFU (OTA) version | — |
+| `AA 4E 00` | `AA 4F 02 00 01` | Secondary firmware / stereo flag | — |
+| `AA 33 00` | `AA 34 01 01` | MFB status (app never uses it on a Charge 5) | — |
+| `AA 61 00` | `AA 62 01 00` | EQ mode (app never uses it on a Charge 5) | — |
+| `AA A8 03 01 02 03` | **`AA EE`** | Player play/pause/skip/volume | **not supported** |
+| `AA 9D 02 0C 0B` | `AA EE` | Usage summary | not supported |
+| `AA 7A 00`, `77`, `68`, `71`, `56`, `B1`, `AB`, `98`, `A4`, `93`, `95`, `B4`, `B7`, `83`, `8B`, `8E` | `AA EE` | serial, bass vol, HFP, light, brightness, playtime boost, vendor codes, adv. EQ, LE audio, BR/EDR analytics, radio, screen, LEDs | not supported |
+
+**Never send `AA 01 02 82 00`.** The app sends it right after reading
+analytics and it wipes the speaker's lifetime counters.
+
+### Token `0x44` battery — charging bit
+
+`CommandProcessor` in the APK: a value `>= 0x80` means **charging**, level is
+`value & 0x7F`. Before v0.3.0 the integration would have shown e.g. 208 % while
+on the charger.
+
+### Token `0x47` audio source
+
+`0` none, `1` Bluetooth (A2DP), `2` AUX, `3` receiver, `4` FM, `5` DAB. Still
+only "connected", not play/pause.
+
+### Remaining tokens
+
+`0x43` is the colour/model variant, `0x45` linked-device count (empty reply on a
+Charge 5), `0x4A` is a CRC-16 of the MAC, `0xC2` secondary serial.
+
+### Simple EQ (`0x6D`)
+
+```
+AA 6D 12 | 02 | 01 | 01 03 (01 00)(02 00)(03 00) | C1 03 (01 bb)(02 mm)(03 tt)
+          scope active  Signature (flat)            Custom: bass / mid / treble
+```
+
+`scope = 2`, so each band is a signed byte in −2…+2. `active` is `01`
+(JBL Signature) or `C1` (Custom). The speaker splits this 21-byte frame across
+two notifications, so frames are reassembled by their length byte
+(`protocol.reassemble`). Set custom: `AA 6E 08 C1 03 01 bb 02 mm 03 tt`; back
+to Signature: `AA 6E 02 01 00`. Sending a `C1` entry with fewer bands than its
+count byte stores garbage in the missing band.
+
+### Analytics (`0x82`)
+
+Big-endian u16 counters, Charge 5 order from
+`ConnectingActivityViewModel.processDeviceAnalytics`: app connections, app
+connected time, critical-temperature events, power-bank use, play time, play
+time on battery, charging time, power-on count, power-on time, AUX play time,
+USB-PD charging time, popular volume usage, popular volume level. The APK has no
+units; power-on time grew by 8 over 8 minutes of a powered-on speaker, so the
+integration treats durations as **minutes**.
+
+### Advertising
+
+Harman manufacturer data (company `0x0057`): `40 20 01 xx 00 00 <crc16 MAC>`,
+i.e. PID `0x2040` little-endian, colour `01`, a status byte that changed between
+`0x74` and `0xF4` across sessions (meaning unknown), and the MAC CRC.
+
+### Media control
+
+There is no transport or volume control for a Charge 5 over this protocol
+(`0xA8` → `0xEE`), and the app has no AVRCP or MediaSession code. Play/pause,
+skip and volume belong to whatever device streams A2DP to the speaker.

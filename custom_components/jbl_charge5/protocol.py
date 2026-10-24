@@ -1,9 +1,10 @@
 """Pure, I/O-free codec for the JBL/Harman 0xAA-framed control protocol.
 
-Frame layout (from pembem22/connect-plus discussion #56):
+Frame layout (pembem22/connect-plus #56, confirmed in the JBL Portable APK's
+com.harman.sdk.utils.PacketFormat / BaseCommand):
     0xAA | packet_type | [length | payload...]
-The length byte and payload are present only when there is a payload.
-No checksum.
+The app always sends the length byte (``AA 11 00``); the speaker also accepts
+the bare ``AA 11`` form we send for payload-less requests. No checksum.
 """
 
 from dataclasses import dataclass, field
@@ -23,6 +24,12 @@ class PacketType(IntEnum):
     FEEDBACK_REQUEST = 0x65
     FEEDBACK_RESPONSE = 0x66
     FEEDBACK_SET = 0x67
+    SIMPLE_EQ_REQUEST = 0x6C
+    SIMPLE_EQ_RESPONSE = 0x6D
+    SIMPLE_EQ_SET = 0x6E
+    ANALYTICS_REQUEST = 0x81
+    ANALYTICS_RESPONSE = 0x82
+    UNSUPPORTED = 0xEE
 
 
 class Token(IntEnum):
@@ -33,6 +40,7 @@ class Token(IntEnum):
     AUDIO_CHANNEL = 0x46
     AUDIO_SOURCE = 0x47
     MAC = 0x48
+    MAC_CRC16 = 0x4A
     DEVICE_NAME = 0xC1
 
 
@@ -63,3 +71,33 @@ def decode_frame(data: bytes) -> Frame:
     if len(payload) < length:
         raise ValueError(f"truncated payload: want {length}, got {len(payload)}")
     return Frame(packet_type=packet_type, payload=payload[:length])
+
+
+def _frame_size(data: bytes) -> int:
+    """Bytes a frame starting at data[0] occupies (bare 2-byte frames allowed)."""
+    return 2 if len(data) <= 2 else 3 + data[2]
+
+
+def reassemble(chunks: list[bytes]) -> list[Frame]:
+    """Turn raw GATT notifications into frames.
+
+    The speaker splits frames longer than its notification size across several
+    notifications (seen live: the 0x6D EQ reply arrives as 11 + 10 bytes), and a
+    continuation may itself start with 0xAA. So a chunk only starts a new frame
+    once the pending one has all the bytes its length byte promised.
+    """
+    frames: list[Frame] = []
+    pending = b""
+    for chunk in chunks:
+        if pending and len(pending) < _frame_size(pending):
+            pending += chunk
+        else:
+            pending = chunk
+        while pending and len(pending) >= _frame_size(pending):
+            size = _frame_size(pending)
+            try:
+                frames.append(decode_frame(pending[:size]))
+            except ValueError:
+                pass  # not an 0xAA frame; drop it
+            pending = pending[size:]
+    return frames

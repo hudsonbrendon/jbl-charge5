@@ -19,6 +19,7 @@ PLATFORMS = [
     Platform.BUTTON,
     Platform.SWITCH,
     Platform.SELECT,
+    Platform.NUMBER,
 ]
 
 type JblConfigEntry = ConfigEntry[JblCharge5Coordinator]

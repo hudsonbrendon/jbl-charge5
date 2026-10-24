@@ -6,8 +6,8 @@ from custom_components.jbl_charge5 import const
 from custom_components.jbl_charge5.bt import async_read_speaker_info
 
 REAL_FRAMES_HEX = [
-    "aa1203004464",          # battery 100
-    "aa1203004701",          # source connected
+    "aa1203004464",  # battery 100
+    "aa1203004701",  # source connected
     "aa12080048aabbccddeeff",  # MAC
 ]
 
@@ -51,3 +51,75 @@ async def test_async_read_speaker_info(monkeypatch):
     assert char == const.WRITE_CHAR_UUID
     assert data == bytes([0xAA, 0x11])
     assert response is False
+
+
+@pytest.mark.asyncio
+async def test_send_command_serializes_and_waits_for_ack(monkeypatch):
+    """Overlapping commands queue on one BLE link and write with response."""
+    import bleak_retry_connector
+    from homeassistant.components import bluetooth
+
+    from custom_components.jbl_charge5.bt import async_send_command
+
+    open_links, max_open, writes = 0, 0, []
+
+    class Link:
+        async def write_gatt_char(self, char, data, response=False):
+            writes.append(response)
+            await asyncio.sleep(0.01)
+
+        async def disconnect(self):
+            nonlocal open_links
+            open_links -= 1
+
+        async def clear_cache(self):
+            return True
+
+    async def fake_connect(*_args, **_kw):
+        nonlocal open_links, max_open
+        open_links += 1
+        max_open = max(max_open, open_links)
+        return Link()
+
+    monkeypatch.setattr(bleak_retry_connector, "establish_connection", fake_connect)
+    monkeypatch.setattr(
+        bluetooth, "async_ble_device_from_address", lambda *_a, **_k: object()
+    )
+    await asyncio.gather(
+        *(async_send_command(None, "AA:BB", b"\xaa\x31") for _ in range(3))
+    )
+    assert max_open == 1
+    assert writes == [True, True, True]
+
+
+@pytest.mark.asyncio
+async def test_send_command_retries_once_on_gatt_error(monkeypatch):
+    import bleak_retry_connector
+    from bleak.exc import BleakError
+    from homeassistant.components import bluetooth
+
+    from custom_components.jbl_charge5.bt import async_send_command
+
+    attempts = []
+
+    class Link:
+        async def write_gatt_char(self, char, data, response=False):
+            attempts.append(data)
+            if len(attempts) == 1:
+                raise BleakError("GATT error 133")
+
+        async def disconnect(self):
+            pass
+
+        async def clear_cache(self):
+            return True
+
+    async def fake_connect(*_a, **_k):
+        return Link()
+
+    monkeypatch.setattr(bleak_retry_connector, "establish_connection", fake_connect)
+    monkeypatch.setattr(
+        bluetooth, "async_ble_device_from_address", lambda *_a, **_k: object()
+    )
+    await async_send_command(None, "CC:DD", b"\xaa\x31")
+    assert len(attempts) == 2

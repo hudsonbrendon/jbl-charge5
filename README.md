@@ -25,11 +25,15 @@ channel — all from the dashboard.
 
 ## Features
 
-- 🔋 **Battery level** — exact percentage reported by the speaker (token `0x44`).
-- ▶️ **In use** — on when a Bluetooth audio source is connected (token `0x47`).
+- 🔋 **Battery level and charging** — percentage plus a charging sensor (token `0x44`).
+- ▶️ **In use / audio source** — Bluetooth, AUX or none (token `0x47`).
+- 🎛️ **Equalizer** — JBL Signature or Custom, with bass / mid / treble sliders (−2…+2).
+- 📊 **Lifetime stats** — play time, play time on battery, charging time,
+  power-on time and count, critical-temperature events.
+- 🧩 **Firmware version** — diagnostic sensor.
 - 🔔 **Play sound** — button that makes the speaker emit its tone, to find it.
 - 🔀 **Audio channel** — select Mono / Left / Right for PartyBoost stereo pairs.
-- 🎚️ **Feedback tones** — switch to enable/disable the speaker's beeps.
+- 🎚️ **Feedback tones** — switch to enable/disable the speaker's beeps (state read back).
 - 🏷️ **Diagnostics** — model and Bluetooth MAC exposed as diagnostic sensors.
 - 📡 **Local & private** — direct BLE, no cloud and no JBL app.
 
@@ -119,12 +123,18 @@ reload) the JBL Charge 5 integration and the battery sensor populates.
 | `sensor.<name>_battery` | Battery level (%) |
 | `sensor.<name>_model` | Model identifier (diagnostic) |
 | `sensor.<name>_mac` | Bluetooth MAC address (diagnostic) |
+| `sensor.<name>_audio_source` | `none` / `bluetooth` / `aux` |
+| `sensor.<name>_firmware` | Firmware version (diagnostic) |
+| `sensor.<name>_play_time`, `_play_time_battery`, `_charging_time`, `_power_on_time` | Lifetime totals from the speaker (diagnostic) |
+| `sensor.<name>_power_on_count`, `_critical_temperature` | Lifetime counts (diagnostic) |
+| `sensor.<name>_power_bank_time`, `_aux_play_time`, `_usb_pd_charging_time` | Lifetime totals, disabled by default |
 
 ### Binary sensor
 
 | Entity | Description |
 |--------|-------------|
-| `binary_sensor.<name>_in_use` | On when a Bluetooth audio source is connected |
+| `binary_sensor.<name>_in_use` | On when a Bluetooth or AUX source is connected |
+| `binary_sensor.<name>_charging` | On while the speaker is charging |
 
 ### Button
 
@@ -143,6 +153,21 @@ reload) the JBL Charge 5 integration and the battery sensor populates.
 | Entity | Description |
 |--------|-------------|
 | `select.<name>_audio_channel` | PartyBoost stereo channel: Mono / Left / Right |
+| `select.<name>_eq` | EQ: JBL Signature / Custom |
+
+### Number
+
+| Entity | Description |
+|--------|-------------|
+| `number.<name>_eq_bass`, `_eq_mid`, `_eq_treble` | Custom EQ bands, −2…+2 (switches EQ to Custom) |
+
+### Not available: play/pause, skip, volume
+
+The Charge 5 rejects the JBL app's player command (`0xA8`), so the BLE link has
+no media control. To use the speaker as a Music Assistant player, stream to it
+from a Bluetooth A2DP source that Music Assistant drives, e.g. a classic ESP32
+running [squeezelite-esp32](https://github.com/sle118/squeezelite-esp32) with
+Bluetooth output.
 
 ## How it works
 

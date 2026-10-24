@@ -2,17 +2,89 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from dataclasses import dataclass
+
 from homeassistant.components.sensor import (
     RestoreSensor,
     SensorDeviceClass,
+    SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import PERCENTAGE, EntityCategory
+from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import JblConfigEntry
 from .entity import JblCharge5Entity
+from .parser import AUDIO_SOURCES, SpeakerInfo
+
+
+@dataclass(frozen=True, kw_only=True)
+class JblSensorDescription(SensorEntityDescription):
+    value_fn: Callable[[SpeakerInfo], str | int | None]
+
+
+def _counter(
+    key: str, minutes: bool = True, enabled: bool = True
+) -> JblSensorDescription:
+    """Lifetime counter from the speaker's analytics block (0x82)."""
+    return JblSensorDescription(
+        key=key,
+        translation_key=key,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        device_class=SensorDeviceClass.DURATION if minutes else None,
+        native_unit_of_measurement=UnitOfTime.MINUTES if minutes else None,
+        suggested_unit_of_measurement=UnitOfTime.HOURS if minutes else None,
+        entity_registry_enabled_default=enabled,
+        value_fn=lambda info: info.analytics.get(key),
+    )
+
+
+SENSORS: tuple[JblSensorDescription, ...] = (
+    JblSensorDescription(
+        key="battery",
+        device_class=SensorDeviceClass.BATTERY,
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda info: info.battery,
+    ),
+    JblSensorDescription(
+        key="audio_source",
+        translation_key="audio_source",
+        device_class=SensorDeviceClass.ENUM,
+        options=[*AUDIO_SOURCES.values()],
+        value_fn=lambda info: info.source,
+    ),
+    JblSensorDescription(
+        key="firmware",
+        translation_key="firmware",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda info: info.firmware,
+    ),
+    JblSensorDescription(
+        key="model",
+        translation_key="model",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda info: None if info.model is None else f"0x{info.model:04X}",
+    ),
+    JblSensorDescription(
+        key="mac",
+        translation_key="mac",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda info: info.mac,
+    ),
+    _counter("play_time"),
+    _counter("play_time_battery"),
+    _counter("charging_time"),
+    _counter("power_on_time"),
+    _counter("power_on_count", minutes=False),
+    _counter("critical_temperature", minutes=False),
+    _counter("power_bank_time", enabled=False),
+    _counter("aux_play_time", enabled=False),
+    _counter("usb_pd_charging_time", enabled=False),
+)
 
 
 async def async_setup_entry(
@@ -22,26 +94,19 @@ async def async_setup_entry(
 ) -> None:
     """Set up the JBL Charge 5 sensors."""
     coordinator = entry.runtime_data
-    async_add_entities(
-        [
-            JblBatterySensor(coordinator),
-            JblModelSensor(coordinator),
-            JblMacSensor(coordinator),
-        ]
-    )
+    async_add_entities(JblSensor(coordinator, d) for d in SENSORS)
 
 
-class JblBatterySensor(JblCharge5Entity, RestoreSensor):
-    """Battery percentage reported by the speaker (token 0x44)."""
+class JblSensor(JblCharge5Entity, RestoreSensor):
+    """A value read from the speaker, restored across Home Assistant restarts."""
 
-    _attr_device_class = SensorDeviceClass.BATTERY
-    _attr_native_unit_of_measurement = PERCENTAGE
-    _attr_state_class = SensorStateClass.MEASUREMENT
+    entity_description: JblSensorDescription
 
-    def __init__(self, coordinator) -> None:
+    def __init__(self, coordinator, description: JblSensorDescription) -> None:
         super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.address}_battery"
-        self._restored_value: int | None = None
+        self.entity_description = description
+        self._attr_unique_id = f"{coordinator.address}_{description.key}"
+        self._restored_value: str | int | None = None
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
@@ -49,54 +114,7 @@ class JblBatterySensor(JblCharge5Entity, RestoreSensor):
             self._restored_value = last_data.native_value
 
     @property
-    def native_value(self) -> int | None:
+    def native_value(self) -> str | int | None:
         if self.coordinator.data is not None:
-            return self.coordinator.data.battery
-        return self._restored_value
-
-
-class JblModelSensor(JblCharge5Entity, RestoreSensor):
-    """Model identifier reported by the speaker (token 0x42)."""
-
-    _attr_translation_key = "model"
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
-
-    def __init__(self, coordinator) -> None:
-        super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.address}_model"
-        self._restored_value: str | None = None
-
-    async def async_added_to_hass(self) -> None:
-        await super().async_added_to_hass()
-        if (last_data := await self.async_get_last_sensor_data()) is not None:
-            self._restored_value = last_data.native_value
-
-    @property
-    def native_value(self) -> str | None:
-        if self.coordinator.data is not None:
-            model = self.coordinator.data.model
-            return None if model is None else f"0x{model:04X}"
-        return self._restored_value
-
-
-class JblMacSensor(JblCharge5Entity, RestoreSensor):
-    """Bluetooth MAC reported by the speaker (token 0x48)."""
-
-    _attr_translation_key = "mac"
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
-
-    def __init__(self, coordinator) -> None:
-        super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.address}_mac"
-        self._restored_value: str | None = None
-
-    async def async_added_to_hass(self) -> None:
-        await super().async_added_to_hass()
-        if (last_data := await self.async_get_last_sensor_data()) is not None:
-            self._restored_value = last_data.native_value
-
-    @property
-    def native_value(self) -> str | None:
-        if self.coordinator.data is not None:
-            return self.coordinator.data.mac
+            return self.entity_description.value_fn(self.coordinator.data)
         return self._restored_value

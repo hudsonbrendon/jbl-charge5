@@ -1,4 +1,4 @@
-"""Feedback-tones switch for the JBL Charge 5 (packet 0x67, optimistic)."""
+"""Feedback-tones switch for the JBL Charge 5 (read 0x65/0x66, set 0x67)."""
 
 from __future__ import annotations
 
@@ -25,14 +25,9 @@ async def async_setup_entry(
 
 
 class JblFeedbackToneSwitch(JblCharge5Entity, SwitchEntity):
-    """Toggle the speaker's audio feedback tones.
-
-    The protocol does not return this state in the Speaker-Info burst, so the
-    switch is optimistic (assumed state).
-    """
+    """Toggle the speaker's audio feedback tones; state is read back every poll."""
 
     _attr_translation_key = "feedback_tones"
-    _attr_assumed_state = True
 
     def __init__(self, coordinator) -> None:
         super().__init__(coordinator)
@@ -48,18 +43,24 @@ class JblFeedbackToneSwitch(JblCharge5Entity, SwitchEntity):
 
     @property
     def is_on(self) -> bool | None:
+        if (
+            self.coordinator.data is not None
+            and self.coordinator.data.feedback_tones is not None
+        ):
+            return self.coordinator.data.feedback_tones
         return self._is_on
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        await async_send_command(
-            self.coordinator.hass, self.coordinator.address, set_feedback_tones(True)
-        )
-        self._is_on = True
-        self.async_write_ha_state()
+        await self._async_set(True)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
+        await self._async_set(False)
+
+    async def _async_set(self, on: bool) -> None:
         await async_send_command(
-            self.coordinator.hass, self.coordinator.address, set_feedback_tones(False)
+            self.coordinator.hass, self.coordinator.address, set_feedback_tones(on)
         )
-        self._is_on = False
+        self._is_on = on
+        if self.coordinator.data is not None:
+            self.coordinator.data.feedback_tones = on
         self.async_write_ha_state()

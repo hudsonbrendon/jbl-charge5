@@ -18,24 +18,99 @@
   },
   "entity": {
     "binary_sensor": {
-      "in_use": { "name": "In use" },
-      "connectivity": { "name": "Connectivity" }
+      "in_use": {
+        "name": "In use"
+      },
+      "connectivity": {
+        "name": "Connectivity"
+      }
     },
     "button": {
-      "play_sound": { "name": "Play sound" }
+      "play_sound": {
+        "name": "Play sound"
+      }
     },
     "switch": {
-      "feedback_tones": { "name": "Feedback tones" }
+      "feedback_tones": {
+        "name": "Feedback tones"
+      }
     },
     "select": {
       "audio_channel": {
         "name": "Audio channel",
-        "state": { "mono": "Mono", "left": "Left", "right": "Right" }
+        "state": {
+          "mono": "Mono",
+          "left": "Left",
+          "right": "Right"
+        }
+      },
+      "eq_preset": {
+        "name": "EQ",
+        "state": {
+          "signature": "JBL Signature",
+          "custom": "Custom"
+        }
       }
     },
     "sensor": {
-      "model": { "name": "Model" },
-      "mac": { "name": "MAC address" }
+      "model": {
+        "name": "Model"
+      },
+      "mac": {
+        "name": "MAC address"
+      },
+      "audio_source": {
+        "name": "Audio source",
+        "state": {
+          "none": "None",
+          "bluetooth": "Bluetooth",
+          "aux": "AUX",
+          "receiver": "Receiver",
+          "fm": "FM radio",
+          "dab": "DAB radio"
+        }
+      },
+      "firmware": {
+        "name": "Firmware"
+      },
+      "play_time": {
+        "name": "Play time"
+      },
+      "play_time_battery": {
+        "name": "Play time on battery"
+      },
+      "charging_time": {
+        "name": "Charging time"
+      },
+      "power_on_time": {
+        "name": "Power-on time"
+      },
+      "power_on_count": {
+        "name": "Power-on count"
+      },
+      "critical_temperature": {
+        "name": "Critical temperature events"
+      },
+      "power_bank_time": {
+        "name": "Power bank use"
+      },
+      "aux_play_time": {
+        "name": "AUX play time"
+      },
+      "usb_pd_charging_time": {
+        "name": "USB-PD charging time"
+      }
+    },
+    "number": {
+      "eq_bass": {
+        "name": "EQ bass"
+      },
+      "eq_mid": {
+        "name": "EQ mid"
+      },
+      "eq_treble": {
+        "name": "EQ treble"
+      }
     }
   }
 }

@@ -18,24 +18,99 @@
   },
   "entity": {
     "binary_sensor": {
-      "in_use": { "name": "Em uso" },
-      "connectivity": { "name": "Conectividade" }
+      "in_use": {
+        "name": "Em uso"
+      },
+      "connectivity": {
+        "name": "Conectividade"
+      }
     },
     "button": {
-      "play_sound": { "name": "Tocar som" }
+      "play_sound": {
+        "name": "Tocar som"
+      }
     },
     "switch": {
-      "feedback_tones": { "name": "Sons de feedback" }
+      "feedback_tones": {
+        "name": "Sons de feedback"
+      }
     },
     "select": {
       "audio_channel": {
         "name": "Canal de áudio",
-        "state": { "mono": "Mono", "left": "Esquerdo", "right": "Direito" }
+        "state": {
+          "mono": "Mono",
+          "left": "Esquerdo",
+          "right": "Direito"
+        }
+      },
+      "eq_preset": {
+        "name": "Equalizador",
+        "state": {
+          "signature": "JBL Signature",
+          "custom": "Personalizado"
+        }
       }
     },
     "sensor": {
-      "model": { "name": "Modelo" },
-      "mac": { "name": "Endereço MAC" }
+      "model": {
+        "name": "Modelo"
+      },
+      "mac": {
+        "name": "Endereço MAC"
+      },
+      "audio_source": {
+        "name": "Fonte de áudio",
+        "state": {
+          "none": "Nenhuma",
+          "bluetooth": "Bluetooth",
+          "aux": "AUX",
+          "receiver": "Receptor",
+          "fm": "Rádio FM",
+          "dab": "Rádio DAB"
+        }
+      },
+      "firmware": {
+        "name": "Firmware"
+      },
+      "play_time": {
+        "name": "Tempo tocando"
+      },
+      "play_time_battery": {
+        "name": "Tempo tocando na bateria"
+      },
+      "charging_time": {
+        "name": "Tempo carregando"
+      },
+      "power_on_time": {
+        "name": "Tempo ligada"
+      },
+      "power_on_count": {
+        "name": "Vezes ligada"
+      },
+      "critical_temperature": {
+        "name": "Eventos de temperatura crítica"
+      },
+      "power_bank_time": {
+        "name": "Uso como power bank"
+      },
+      "aux_play_time": {
+        "name": "Tempo tocando no AUX"
+      },
+      "usb_pd_charging_time": {
+        "name": "Tempo carregando via USB-PD"
+      }
+    },
+    "number": {
+      "eq_bass": {
+        "name": "Graves"
+      },
+      "eq_mid": {
+        "name": "Médios"
+      },
+      "eq_treble": {
+        "name": "Agudos"
+      }
     }
   }
 }

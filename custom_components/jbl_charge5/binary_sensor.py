@@ -1,4 +1,4 @@
-"""'In use' binary sensor for the JBL Charge 5 (source-connected, token 0x47)."""
+"""Binary sensors for the JBL Charge 5 (in use, charging, connectivity)."""
 
 from __future__ import annotations
 
@@ -24,20 +24,25 @@ async def async_setup_entry(
     async_add_entities(
         [
             JblInUseBinarySensor(coordinator),
+            JblChargingBinarySensor(coordinator),
             JblConnectivityBinarySensor(coordinator),
         ]
     )
 
 
 class JblInUseBinarySensor(JblCharge5Entity, BinarySensorEntity):
-    """True when a Bluetooth audio source is connected (playing or paused)."""
+    """True when an audio source (Bluetooth or AUX) is connected, playing or paused."""
 
     _attr_translation_key = "in_use"
+    _key = "in_use"
 
     def __init__(self, coordinator) -> None:
         super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.address}_in_use"
+        self._attr_unique_id = f"{coordinator.address}_{self._key}"
         self._restored_is_on: bool | None = None
+
+    def _value(self, info) -> bool | None:
+        return info.source_connected
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
@@ -48,8 +53,19 @@ class JblInUseBinarySensor(JblCharge5Entity, BinarySensorEntity):
     @property
     def is_on(self) -> bool | None:
         if self.coordinator.data is not None:
-            return self.coordinator.data.source_connected
+            return self._value(self.coordinator.data)
         return self._restored_is_on
+
+
+class JblChargingBinarySensor(JblInUseBinarySensor):
+    """Charger plugged in: bit 7 of the battery token 0x44."""
+
+    _attr_device_class = BinarySensorDeviceClass.BATTERY_CHARGING
+    _attr_translation_key = None
+    _key = "charging"
+
+    def _value(self, info) -> bool | None:
+        return info.charging
 
 
 class JblConnectivityBinarySensor(JblCharge5Entity, BinarySensorEntity):

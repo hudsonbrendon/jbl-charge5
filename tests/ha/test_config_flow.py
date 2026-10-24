@@ -41,9 +41,7 @@ async def test_bluetooth_discovery_flow(hass: HomeAssistant, mock_bluetooth):
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "confirm"
 
-    with patch(
-        "custom_components.jbl_charge5.async_setup_entry", return_value=True
-    ):
+    with patch("custom_components.jbl_charge5.async_setup_entry", return_value=True):
         result2 = await hass.config_entries.flow.async_configure(result["flow_id"], {})
 
     assert result2["type"] is FlowResultType.CREATE_ENTRY
