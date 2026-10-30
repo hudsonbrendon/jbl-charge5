@@ -94,8 +94,8 @@ async def test_send_command_serializes_and_waits_for_ack(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_send_command_retries_once_on_gatt_error(monkeypatch):
-    import bleak_retry_connector
     from bleak.exc import BleakError
+    import bleak_retry_connector
     from homeassistant.components import bluetooth
 
     from custom_components.jbl_charge5.bt import async_send_command

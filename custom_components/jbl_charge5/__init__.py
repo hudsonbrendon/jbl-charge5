@@ -27,14 +27,13 @@ type JblConfigEntry = ConfigEntry[JblCharge5Coordinator]
 
 async def async_setup_entry(hass: HomeAssistant, entry: JblConfigEntry) -> bool:
     """Set up JBL Charge 5 from a config entry."""
-    address = entry.unique_id
-    assert address is not None
-
-    coordinator = JblCharge5Coordinator(hass, address)
+    coordinator = JblCharge5Coordinator(hass, entry)
     try:
         await coordinator.async_config_entry_first_refresh()
     except ConfigEntryNotReady:
-        _LOGGER.debug("JBL %s offline at setup; loading with no cached state", address)
+        _LOGGER.debug(
+            "JBL %s offline at setup; loading with no cached state", coordinator.address
+        )
     entry.runtime_data = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True

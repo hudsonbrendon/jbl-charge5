@@ -8,16 +8,20 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import JblConfigEntry
+from .coordinator import JblCharge5Coordinator
 from .entity import JblCharge5Entity
+from .parser import SpeakerInfo
+
+PARALLEL_UPDATES = 0
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: JblConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the binary sensors."""
     coordinator = entry.runtime_data
@@ -36,15 +40,17 @@ class JblInUseBinarySensor(JblCharge5Entity, BinarySensorEntity):
     _attr_translation_key = "in_use"
     _key = "in_use"
 
-    def __init__(self, coordinator) -> None:
+    def __init__(self, coordinator: JblCharge5Coordinator) -> None:
+        """Initialise with a per-speaker unique id."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.address}_{self._key}"
         self._restored_is_on: bool | None = None
 
-    def _value(self, info) -> bool | None:
+    def _value(self, info: SpeakerInfo) -> bool | None:
         return info.source_connected
 
     async def async_added_to_hass(self) -> None:
+        """Restore the last on/off state for use until the speaker is seen."""
         await super().async_added_to_hass()
         last_state = await self.async_get_last_state()
         if last_state is not None and last_state.state in (STATE_ON, STATE_OFF):
@@ -52,6 +58,7 @@ class JblInUseBinarySensor(JblCharge5Entity, BinarySensorEntity):
 
     @property
     def is_on(self) -> bool | None:
+        """Live value when available, otherwise the restored one."""
         if self.coordinator.data is not None:
             return self._value(self.coordinator.data)
         return self._restored_is_on
@@ -64,7 +71,7 @@ class JblChargingBinarySensor(JblInUseBinarySensor):
     _attr_translation_key = None
     _key = "charging"
 
-    def _value(self, info) -> bool | None:
+    def _value(self, info: SpeakerInfo) -> bool | None:
         return info.charging
 
 
@@ -79,14 +86,17 @@ class JblConnectivityBinarySensor(JblCharge5Entity, BinarySensorEntity):
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
     _attr_translation_key = "connectivity"
 
-    def __init__(self, coordinator) -> None:
+    def __init__(self, coordinator: JblCharge5Coordinator) -> None:
+        """Initialise with a per-speaker unique id."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.address}_connectivity"
 
     @property
     def available(self) -> bool:
+        """Always available: "off" is a real, live answer."""
         return True
 
     @property
     def is_on(self) -> bool:
+        """Whether the last poll reached the speaker."""
         return self.coordinator.device_online

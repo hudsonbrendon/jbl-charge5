@@ -2,9 +2,9 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.jbl_charge5.const import DOMAIN
@@ -13,6 +13,12 @@ from custom_components.jbl_charge5.entity import JblCharge5Entity
 from custom_components.jbl_charge5.parser import SpeakerInfo
 
 ADDRESS = "10:28:74:A4:8D:E7"
+
+
+def _coordinator(hass: HomeAssistant) -> JblCharge5Coordinator:
+    entry = MockConfigEntry(domain=DOMAIN, unique_id=ADDRESS, title="JBL Charge 5")
+    entry.add_to_hass(hass)
+    return JblCharge5Coordinator(hass, entry)
 
 
 @pytest.fixture(autouse=True)
@@ -27,7 +33,7 @@ def patch_bluetooth_history():
 
 async def test_keeps_last_known_data_when_device_goes_none(hass: HomeAssistant):
     """When the speaker drops out of range, cached data is returned (no raise)."""
-    coordinator = JblCharge5Coordinator(hass, ADDRESS)
+    coordinator = _coordinator(hass)
     cached = SpeakerInfo(battery=77, source_connected=True, name="JBL Charge 5")
     coordinator.data = cached
 
@@ -44,7 +50,7 @@ async def test_keeps_last_known_data_when_device_goes_none(hass: HomeAssistant):
 
 async def test_entity_available_while_data_present(hass: HomeAssistant):
     """A base entity stays available as long as the coordinator has data."""
-    coordinator = JblCharge5Coordinator(hass, ADDRESS)
+    coordinator = _coordinator(hass)
     coordinator.data = SpeakerInfo(battery=50, name="JBL Charge 5")
 
     entity = JblCharge5Entity(coordinator)

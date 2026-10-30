@@ -13,6 +13,8 @@ PREAMBLE = 0xAA
 
 
 class PacketType(IntEnum):
+    """Second byte of every frame: what the frame is."""
+
     ACK = 0x00
     SPEAKER_INFO_REQUEST = 0x11
     SPEAKER_INFO_RESPONSE = 0x12
@@ -23,6 +25,8 @@ class PacketType(IntEnum):
 
 
 class Token(IntEnum):
+    """Field ids inside a Speaker-Info (0x12) payload."""
+
     MODEL = 0x42
     COLOR = 0x43
     BATTERY = 0x44
@@ -44,6 +48,8 @@ def encode_frame(packet_type: int, payload: bytes = b"") -> bytes:
 
 @dataclass(frozen=True)
 class Frame:
+    """One decoded control frame."""
+
     packet_type: int
     payload: bytes = field(default=b"")
 

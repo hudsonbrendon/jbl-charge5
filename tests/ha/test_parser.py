@@ -55,8 +55,10 @@ LIVE_CHUNKS_HEX = [
     "aa660100",  # feedback tones off
     "aa6d1202c1010301000200",  # simple EQ, split by the speaker...
     "0300c103010102ff03fe",  # ...across two notifications
-    "aa82260001000000280000065005c21712002909ed"
-    "0000000000000000000000000000000000000000",  # analytics
+    (
+        "aa82260001000000280000065005c21712002909ed"
+        "0000000000000000000000000000000000000000"
+    ),  # analytics
 ]
 
 

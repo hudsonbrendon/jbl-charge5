@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import Any
 
-import voluptuous as vol
 from homeassistant.components.bluetooth import (
     BluetoothServiceInfoBleak,
     async_discovered_service_info,
 )
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+import voluptuous as vol
 
 from .const import DOMAIN
 
@@ -22,6 +22,7 @@ class JblCharge5ConfigFlow(ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     def __init__(self) -> None:
+        """Start with no discovered speakers."""
         self._discovery: BluetoothServiceInfoBleak | None = None
         self._discovered: dict[str, str] = {}
 

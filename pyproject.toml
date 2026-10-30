@@ -1,28 +1,143 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "jbl-charge5"
 version = "0.0.1"
 description = "Reverse-engineered control protocol + client for the JBL Charge 5"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
+authors = [{ name = "Hudson Brendon", email = "contato.hudsonbrendon@gmail.com" }]
+keywords = ["jbl", "charge-5", "bluetooth", "ble", "home-assistant", "async"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Framework :: AsyncIO",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Home Automation",
+  "Typing :: Typed",
+]
 dependencies = ["bleak>=0.22"]
 
-[project.optional-dependencies]
-dev = ["pytest>=8", "pytest-asyncio>=0.23"]
+[project.urls]
+Homepage = "https://github.com/hudsonbrendon/jbl-charge5"
+Repository = "https://github.com/hudsonbrendon/jbl-charge5"
+Issues = "https://github.com/hudsonbrendon/jbl-charge5/issues"
+Changelog = "https://github.com/hudsonbrendon/jbl-charge5/blob/main/CHANGELOG.md"
+
+[dependency-groups]
+dev = [
+  "mypy>=1.14",
+  "pytest>=8.3",
+  "pytest-asyncio>=0.25",
+  "pytest-cov>=6",
+  "pytest-timeout>=2.3",
+  "ruff>=0.9",
+  # Home Assistant test harness for custom_components/ (HA 2026.10.4).
+  "pytest-homeassistant-custom-component==0.13.375",
+  # Pulled in when the tests import homeassistant.components.bluetooth (which
+  # loads the usb integration); not part of the HA core wheel. Pins match HA.
+  "bleak-retry-connector==4.7.1",
+  "aiousbwatcher==1.1.2",
+  "serialx==1.11.0",
+]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[tool.uv.dependency-groups]
+# HA 2026.10 needs Python 3.14.2; the lib itself still runs on >=3.11.
+dev = { requires-python = ">=3.14.2" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-pythonpath = ["src", "."]
+[tool.setuptools.package-data]
+jbl_charge5 = ["py.typed"]
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py311"
 line-length = 88
-exclude = ["scripts", ".bt", ".venv"]
+exclude = ["scripts", ".bt", ".venv", "docs"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B"]
+select = ["ALL"]
+ignore = [
+  "ANN401",  # Any in **kwargs
+  "COM812",  # formatter conflict
+  "CPY001",  # no copyright headers
+  "D203",    # docstring style conflicts (keep D211)
+  "D213",    # docstring style conflicts (keep D212)
+  "D417",    # false positives on Args sections
+  "ISC001",  # formatter conflict
+  "PLR2004", # magic values are fine in protocol code
+  "TRY003",  # long exception messages
+  "EM101",   # string literal in exception
+  "EM102",   # f-string in exception
+  "FBT001",  # boolean positional args in setters are intentional
+  "FBT002",
+  "PLR0913", # protocol setters have many parameters
+  "C901",    # parsers are branchy by nature
+  "PLR0912",
+  "PLR0915",
+  "PLR0911", # state machines have many returns
+  "ERA001",  # section banners look like commented code
+  "TRY300",  # try/else style is a matter of taste
+  "TC001",   # runtime imports are fine with `from __future__ import annotations`
+  "TC002",
+  "TC003",
+  "A005",    # HA platform modules (select.py) must shadow stdlib names
+  "ARG001",  # HA callback signatures (hass, entry, ...) carry unused params
+  "RUF012",  # HA `_attr_*` class attributes are mutable by convention
+  "S101",    # asserts narrow Optionals the HA way (config flow)
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+combine-as-imports = true
+known-first-party = ["jbl_charge5", "custom_components.jbl_charge5"]
+
+[tool.ruff.lint.flake8-pytest-style]
+fixture-parentheses = false
+mark-parentheses = false
+
+[tool.ruff.lint.flake8-unused-arguments]
+ignore-variadic-names = true
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*" = ["ANN", "D", "E501", "PLR", "S", "SLF", "ARG", "INP", "FBT", "PT", "PLC0415", "ERA", "RUF012", "N806", "T201", "ASYNC", "EM", "TRY", "BLE", "C901", "PGH", "RUF"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unreachable = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = ["bleak_retry_connector.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-q --cov=jbl_charge5 --cov=custom_components.jbl_charge5 --cov-report=term-missing"
+timeout = 30
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 84

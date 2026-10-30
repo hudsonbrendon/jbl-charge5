@@ -7,18 +7,21 @@ from typing import Any
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import JblConfigEntry
 from .bt import async_send_command
 from .commands import set_feedback_tones
+from .coordinator import JblCharge5Coordinator
 from .entity import JblCharge5Entity
+
+PARALLEL_UPDATES = 1
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: JblConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the feedback-tones switch."""
     async_add_entities([JblFeedbackToneSwitch(entry.runtime_data)])
@@ -29,7 +32,8 @@ class JblFeedbackToneSwitch(JblCharge5Entity, SwitchEntity):
 
     _attr_translation_key = "feedback_tones"
 
-    def __init__(self, coordinator) -> None:
+    def __init__(self, coordinator: JblCharge5Coordinator) -> None:
+        """Initialise with a per-speaker unique id."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.address}_feedback_tones"
         self._is_on: bool | None = None
@@ -43,6 +47,7 @@ class JblFeedbackToneSwitch(JblCharge5Entity, SwitchEntity):
 
     @property
     def is_on(self) -> bool | None:
+        """Value read from the speaker, else the last commanded/restored one."""
         if (
             self.coordinator.data is not None
             and self.coordinator.data.feedback_tones is not None
@@ -51,10 +56,12 @@ class JblFeedbackToneSwitch(JblCharge5Entity, SwitchEntity):
         return self._is_on
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        await self._async_set(True)
+        """Enable the feedback tones."""
+        await self._async_set(on=True)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        await self._async_set(False)
+        """Disable the feedback tones."""
+        await self._async_set(on=False)
 
     async def _async_set(self, on: bool) -> None:
         await async_send_command(

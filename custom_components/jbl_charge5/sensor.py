@@ -13,15 +13,20 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfTime
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import JblConfigEntry
+from .coordinator import JblCharge5Coordinator
 from .entity import JblCharge5Entity
 from .parser import AUDIO_SOURCES, SpeakerInfo
+
+PARALLEL_UPDATES = 0
 
 
 @dataclass(frozen=True, kw_only=True)
 class JblSensorDescription(SensorEntityDescription):
+    """Sensor description with a getter into SpeakerInfo."""
+
     value_fn: Callable[[SpeakerInfo], str | int | None]
 
 
@@ -90,7 +95,7 @@ SENSORS: tuple[JblSensorDescription, ...] = (
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: JblConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the JBL Charge 5 sensors."""
     coordinator = entry.runtime_data
@@ -102,19 +107,24 @@ class JblSensor(JblCharge5Entity, RestoreSensor):
 
     entity_description: JblSensorDescription
 
-    def __init__(self, coordinator, description: JblSensorDescription) -> None:
+    def __init__(
+        self, coordinator: JblCharge5Coordinator, description: JblSensorDescription
+    ) -> None:
+        """Initialise from a description with a per-speaker unique id."""
         super().__init__(coordinator)
         self.entity_description = description
         self._attr_unique_id = f"{coordinator.address}_{description.key}"
         self._restored_value: str | int | None = None
 
     async def async_added_to_hass(self) -> None:
+        """Restore the last value for use until the speaker is seen."""
         await super().async_added_to_hass()
         if (last_data := await self.async_get_last_sensor_data()) is not None:
             self._restored_value = last_data.native_value
 
     @property
     def native_value(self) -> str | int | None:
+        """Live value when available, otherwise the restored one."""
         if self.coordinator.data is not None:
             return self.entity_description.value_fn(self.coordinator.data)
         return self._restored_value

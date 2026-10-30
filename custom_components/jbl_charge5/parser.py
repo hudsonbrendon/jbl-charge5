@@ -46,6 +46,8 @@ ANALYTICS_FIELDS = (
 
 @dataclass
 class SpeakerInfo:
+    """Everything one poll learns about the speaker; None when a reply is missing."""
+
     battery: int | None = None
     charging: bool | None = None
     source: str | None = None
@@ -67,7 +69,7 @@ class SpeakerInfo:
 
 
 def _token_value(payload: bytes) -> tuple[int, bytes] | None:
-    """Payload is `00 <token> [len] <value>`. Return (token, value) or None."""
+    """Split a `00 <token> [len] <value>` payload into (token, value), or None."""
     if len(payload) < 3 or payload[0] != 0x00:
         return None
     token = payload[1]
@@ -79,6 +81,7 @@ def _token_value(payload: bytes) -> tuple[int, bytes] | None:
 
 
 def _int8(b: int) -> int:
+    """Read a byte as a signed int8."""
     return b - 256 if b > 127 else b
 
 
@@ -89,6 +92,7 @@ def _bcd(b: int) -> str:
 
 
 def _parse_token(info: SpeakerInfo, payload: bytes) -> None:
+    """Apply one Speaker-Info (0x12) token to ``info``."""
     parsed = _token_value(payload)
     if parsed is None:
         return
@@ -115,6 +119,7 @@ def _parse_token(info: SpeakerInfo, payload: bytes) -> None:
 
 
 def _parse_eq(info: SpeakerInfo, p: bytes) -> None:
+    """Apply a simple-EQ (0x6D) reply to ``info``."""
     if len(p) < 2:
         return
     info.eq_scope, active = p[0], p[1]
@@ -133,6 +138,7 @@ def _parse_eq(info: SpeakerInfo, p: bytes) -> None:
 
 
 def parse_speaker_info(frames: list[Frame]) -> SpeakerInfo:
+    """Fold every reply frame of one poll into a SpeakerInfo."""
     info = SpeakerInfo()
     for frame in frames:
         p = frame.payload

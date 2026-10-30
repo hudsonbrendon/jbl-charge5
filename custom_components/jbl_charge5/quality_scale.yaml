@@ -1,0 +1,94 @@
+rules:
+  # Bronze
+  action-setup:
+    status: exempt
+    comment: The integration does not register actions; everything is an entity.
+  appropriate-polling: done
+  brands: done
+  common-modules: done
+  config-flow: done
+  config-flow-test-coverage: todo
+  dependency-transparency: done
+  docs-actions:
+    status: exempt
+    comment: The integration does not register actions.
+  docs-conditions:
+    status: exempt
+    comment: The integration does not provide conditions.
+  docs-high-level-description: done
+  docs-installation-instructions: done
+  docs-removal-instructions: todo
+  docs-triggers:
+    status: exempt
+    comment: The integration does not provide triggers.
+  entity-event-setup:
+    status: exempt
+    comment: Entities only consume coordinator updates; nothing else to subscribe to.
+  entity-unique-id: done
+  has-entity-name: done
+  runtime-data: done
+  test-before-configure:
+    status: exempt
+    comment: Bluetooth discovery flow with no credentials; the speaker is only offered once it advertises its control service.
+  test-before-setup:
+    status: exempt
+    comment: Setup deliberately succeeds while the speaker is off so entities keep their last-known state; the connectivity binary sensor reports reachability.
+  unique-config-entry: done
+
+  # Silver
+  action-exceptions: todo
+  config-entry-unloading: done
+  docs-configuration-parameters:
+    status: exempt
+    comment: There is no options flow.
+  docs-installation-parameters: done
+  entity-unavailable:
+    status: exempt
+    comment: By design entities keep their last-known state when the speaker is off (BLE speakers are off most of the time); the connectivity binary sensor exposes reachability.
+  integration-owner: done
+  log-when-unavailable: todo
+  parallel-updates: done
+  reauthentication-flow:
+    status: exempt
+    comment: No credentials are involved.
+  test-coverage: done
+
+  # Gold
+  devices: done
+  diagnostics: done
+  discovery: done
+  discovery-update-info:
+    status: exempt
+    comment: The Bluetooth address is the unique id and never changes.
+  docs-data-update: done
+  docs-examples: todo
+  docs-known-limitations: done
+  docs-supported-devices: done
+  docs-supported-functions: done
+  docs-troubleshooting: todo
+  docs-use-cases: done
+  dynamic-devices:
+    status: exempt
+    comment: One config entry is one speaker.
+  entity-category: done
+  entity-device-class: done
+  entity-disabled-by-default: done
+  entity-translations: done
+  exception-translations: todo
+  icon-translations: done
+  reconfiguration-flow:
+    status: exempt
+    comment: Nothing is configurable beyond picking the speaker.
+  repair-issues:
+    status: exempt
+    comment: Failures surface through the connectivity sensor; nothing needs a repair flow.
+  stale-devices:
+    status: exempt
+    comment: One config entry is one speaker; removing the entry removes the device.
+
+  # Platinum
+  async-dependency: done
+  inject-websession:
+    status: exempt
+    comment: Bluetooth only; no HTTP session.
+  strict-typing: todo

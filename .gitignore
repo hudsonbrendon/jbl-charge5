@@ -1,7 +1,13 @@
 __pycache__/
-*.pyc
+*.py[cod]
 .venv/
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
 *.egg-info/
+dist/
+build/
+.DS_Store
 docs/captures/btsnoop_hci.log
 .bt/

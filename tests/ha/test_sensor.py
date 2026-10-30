@@ -1,11 +1,15 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
+from homeassistant.components.diagnostics import REDACTED
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.jbl_charge5.const import DOMAIN
+from custom_components.jbl_charge5.diagnostics import (
+    async_get_config_entry_diagnostics,
+)
 from custom_components.jbl_charge5.parser import SpeakerInfo
 
 ADDRESS = "10:28:74:A4:8D:E7"
@@ -57,3 +61,16 @@ async def test_battery_and_in_use_entities(hass: HomeAssistant):
     in_use = hass.states.get("binary_sensor.jbl_charge_5_in_use")
     assert in_use is not None
     assert in_use.state == "on"
+
+
+async def test_diagnostics_redact_addresses(hass: HomeAssistant):
+    info = SpeakerInfo(battery=100, mac="aa:bb:cc:dd:ee:ff", raw={0x48: "aabbccddeeff"})
+    entry = await _setup(hass, info)
+
+    diag = await async_get_config_entry_diagnostics(hass, entry)
+
+    assert diag["device_online"] is True
+    assert diag["data"]["battery"] == 100
+    assert diag["entry"]["unique_id"] == REDACTED
+    assert diag["data"]["mac"] == REDACTED
+    assert diag["data"]["raw"][0x48] == REDACTED
