@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-import logging
 from dataclasses import fields
 from datetime import timedelta
+import logging
 
+from bleak.backends.device import BLEDevice
 from bleak.exc import BleakError
 from bleak_retry_connector import BleakClientWithServiceCache, establish_connection
 from homeassistant.components import bluetooth
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .bt import BLE_LOCKS, async_read_speaker_info
@@ -22,10 +25,15 @@ _LOGGER = logging.getLogger(__name__)
 class JblCharge5Coordinator(DataUpdateCoordinator[SpeakerInfo]):
     """Connect on an interval, read Speaker-Info, expose it to entities."""
 
-    def __init__(self, hass: HomeAssistant, address: str) -> None:
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+        """Poll the speaker whose Bluetooth address is the entry's unique id."""
+        address = entry.unique_id
+        if address is None:
+            raise ConfigEntryError("Config entry has no Bluetooth address")
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=entry,
             name=DOMAIN,
             update_interval=timedelta(seconds=SCAN_INTERVAL_SECONDS),
         )
@@ -33,6 +41,7 @@ class JblCharge5Coordinator(DataUpdateCoordinator[SpeakerInfo]):
         self.device_online = False
 
     async def _async_update_data(self) -> SpeakerInfo:
+        """Read Speaker-Info, keeping the last-known state while out of range."""
         device = bluetooth.async_ble_device_from_address(
             self.hass, self.address, connectable=True
         )
@@ -47,7 +56,8 @@ class JblCharge5Coordinator(DataUpdateCoordinator[SpeakerInfo]):
         async with BLE_LOCKS[self.address]:
             return await self._async_poll(device)
 
-    async def _async_poll(self, device) -> SpeakerInfo:
+    async def _async_poll(self, device: BLEDevice) -> SpeakerInfo:
+        """Connect, read, and fill replies lost this poll from the last values."""
         client = await establish_connection(
             BleakClientWithServiceCache, device, self.address
         )

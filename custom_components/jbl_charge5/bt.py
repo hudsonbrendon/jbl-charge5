@@ -5,6 +5,13 @@ from __future__ import annotations
 import asyncio
 from collections import defaultdict
 
+from bleak import BleakClient
+from bleak.exc import BleakError
+import bleak_retry_connector
+from homeassistant.components import bluetooth
+from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
+
 from .const import NOTIFY_CHAR_UUID, WRITE_CHAR_UUID
 from .parser import SpeakerInfo, parse_speaker_info
 from .protocol import PacketType, encode_frame, reassemble
@@ -31,7 +38,7 @@ COLLECT_SECONDS = 1.5
 
 
 async def async_read_speaker_info(
-    client, collect_seconds: float = COLLECT_SECONDS
+    client: BleakClient, collect_seconds: float = COLLECT_SECONDS
 ) -> SpeakerInfo:
     """Send the poll requests and parse every notification that came back.
 
@@ -53,21 +60,17 @@ async def async_read_speaker_info(
     return parse_speaker_info(reassemble(chunks))
 
 
-async def async_send_command(hass, address: str, frame: bytes) -> None:
+async def async_send_command(hass: HomeAssistant, address: str, frame: bytes) -> None:
     """Connect to the speaker, write one control frame, and disconnect."""
-    from bleak_retry_connector import BleakClientWithServiceCache, establish_connection
-    from homeassistant.components import bluetooth
-    from homeassistant.exceptions import HomeAssistantError
-
     device = bluetooth.async_ble_device_from_address(hass, address, connectable=True)
     if device is None:
         raise HomeAssistantError(f"JBL Charge 5 {address} not in range")
-    from bleak.exc import BleakError
 
     async with BLE_LOCKS[address]:
         for attempt in (1, 2):
-            client = await establish_connection(
-                BleakClientWithServiceCache, device, address
+            # Looked up at call time so tests can monkeypatch the module.
+            client = await bleak_retry_connector.establish_connection(
+                bleak_retry_connector.BleakClientWithServiceCache, device, address
             )
             try:
                 # With response, like the app: the write is acknowledged before

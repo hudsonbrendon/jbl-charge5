@@ -1,0 +1,71 @@
+{
+  "entity": {
+    "binary_sensor": {
+      "in_use": {
+        "default": "mdi:speaker-off",
+        "state": {
+          "on": "mdi:speaker-play"
+        }
+      }
+    },
+    "button": {
+      "play_sound": {
+        "default": "mdi:bullhorn"
+      }
+    },
+    "number": {
+      "eq_bass": {
+        "default": "mdi:equalizer"
+      },
+      "eq_mid": {
+        "default": "mdi:equalizer"
+      },
+      "eq_treble": {
+        "default": "mdi:equalizer"
+      }
+    },
+    "select": {
+      "audio_channel": {
+        "default": "mdi:speaker-multiple"
+      },
+      "eq_preset": {
+        "default": "mdi:equalizer"
+      }
+    },
+    "sensor": {
+      "audio_source": {
+        "default": "mdi:volume-off",
+        "state": {
+          "bluetooth": "mdi:bluetooth-audio",
+          "aux": "mdi:audio-input-stereo-minijack",
+          "receiver": "mdi:speaker-wireless",
+          "fm": "mdi:radio",
+          "dab": "mdi:radio"
+        }
+      },
+      "firmware": {
+        "default": "mdi:chip"
+      },
+      "model": {
+        "default": "mdi:speaker"
+      },
+      "mac": {
+        "default": "mdi:bluetooth"
+      },
+      "power_on_count": {
+        "default": "mdi:counter"
+      },
+      "critical_temperature": {
+        "default": "mdi:thermometer-alert"
+      }
+    },
+    "switch": {
+      "feedback_tones": {
+        "default": "mdi:volume-off",
+        "state": {
+          "on": "mdi:volume-high"
+        }
+      }
+    }
+  }
+}

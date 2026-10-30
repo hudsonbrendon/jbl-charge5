@@ -1,10 +1,10 @@
 from unittest.mock import patch
 
-import pytest
 from homeassistant.components.bluetooth import BluetoothServiceInfoBleak
 from homeassistant.config_entries import SOURCE_BLUETOOTH
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+import pytest
 
 from custom_components.jbl_charge5.const import DOMAIN, SERVICE_UUID
 

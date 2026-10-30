@@ -7,6 +7,7 @@ The app always sends the length byte (``AA 11 00``); the speaker also accepts
 the bare ``AA 11`` form we send for payload-less requests. No checksum.
 """
 
+import contextlib
 from dataclasses import dataclass, field
 from enum import IntEnum
 
@@ -14,6 +15,8 @@ PREAMBLE = 0xAA
 
 
 class PacketType(IntEnum):
+    """Second byte of every frame: what the frame is."""
+
     ACK = 0x00
     SPEAKER_INFO_REQUEST = 0x11
     SPEAKER_INFO_RESPONSE = 0x12
@@ -33,6 +36,8 @@ class PacketType(IntEnum):
 
 
 class Token(IntEnum):
+    """Field ids inside a Speaker-Info (0x12) payload."""
+
     MODEL = 0x42
     COLOR = 0x43
     BATTERY = 0x44
@@ -55,6 +60,8 @@ def encode_frame(packet_type: int, payload: bytes = b"") -> bytes:
 
 @dataclass(frozen=True)
 class Frame:
+    """One decoded control frame."""
+
     packet_type: int
     payload: bytes = field(default=b"")
 
@@ -95,9 +102,7 @@ def reassemble(chunks: list[bytes]) -> list[Frame]:
             pending = chunk
         while pending and len(pending) >= _frame_size(pending):
             size = _frame_size(pending)
-            try:
+            with contextlib.suppress(ValueError):  # not an 0xAA frame; drop it
                 frames.append(decode_frame(pending[:size]))
-            except ValueError:
-                pass  # not an 0xAA frame; drop it
             pending = pending[size:]
     return frames

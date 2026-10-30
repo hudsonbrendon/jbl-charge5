@@ -13,8 +13,9 @@ So the request and its response use DIFFERENT characteristics.
 import asyncio
 
 from bleak import BleakClient, BleakScanner
+from bleak.backends.characteristic import BleakGATTCharacteristic
 
-from jbl_charge5.protocol import PacketType, decode_frame, encode_frame
+from jbl_charge5.protocol import Frame, PacketType, decode_frame, encode_frame
 from jbl_charge5.tokens import extract_battery
 
 WRITE_CHAR_UUID = "65786365-6c70-6f69-6e74-2e636f6d0002"
@@ -32,12 +33,15 @@ async def find_speaker(name_filter: str = "JBL") -> str:
     return match.address
 
 
-async def read_speaker_info(address: str, timeout: float = 5.0) -> dict:
+async def read_speaker_info(
+    address: str,
+    timeout: float = 5.0,  # noqa: ASYNC109 - public API, kept for compatibility
+) -> dict[str, int | str | None]:
     """Connect, request Speaker Info, return {'battery': int|None, 'raw': hex}."""
-    loop = asyncio.get_event_loop()
-    response: asyncio.Future = loop.create_future()
+    loop = asyncio.get_running_loop()
+    response: asyncio.Future[Frame] = loop.create_future()
 
-    def on_notify(_handle, data: bytearray) -> None:
+    def on_notify(_handle: BleakGATTCharacteristic, data: bytearray) -> None:
         try:
             frame = decode_frame(bytes(data))
         except ValueError:

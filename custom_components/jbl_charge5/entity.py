@@ -37,6 +37,7 @@ class JblCharge5Entity(RestoreEntity, CoordinatorEntity[JblCharge5Coordinator]):
     _attr_has_entity_name = True
 
     def __init__(self, coordinator: JblCharge5Coordinator) -> None:
+        """Describe the speaker device and start with nothing restored."""
         super().__init__(coordinator)
         address = coordinator.address
         info = coordinator.data

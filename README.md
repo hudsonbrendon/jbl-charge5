@@ -205,10 +205,12 @@ Assistant to it — see [Bluetooth proxy (required)](#bluetooth-proxy-required).
 ## Development
 
 ```bash
-uv venv && uv pip install -r requirements_test.txt
-.venv/bin/pytest        # pure codec tests + HA integration tests
-.venv/bin/ruff check .
+uv sync                  # Python 3.14 venv: the lib (editable) + HA test harness
+uv run pytest            # pure codec tests + HA integration tests, with coverage
+uv run ruff check . && uv run ruff format --check . && uv run mypy src
 ```
+
+Without uv: `pip install -r requirements_test.txt -e .` then `pytest`.
 
 ## License
 
